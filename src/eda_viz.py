@@ -15,11 +15,14 @@ project, so it can be dropped into any notebook with two lines:
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
 
 __all__ = [
+    "find_repo_root",
     "load_panel",
     "launch_week",
     "rank_similarity_to_us",
@@ -64,8 +67,30 @@ _SANS = ["Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans"]
 
 
 # --- data ------------------------------------------------------------------
-def load_panel(path: str = "../data/market_week_data.csv") -> pd.DataFrame:
-    """Read the market-week panel with week_start as datetimes."""
+def find_repo_root(start=None) -> Path:
+    """Walk up from `start` (default: cwd) to the directory holding data/.
+
+    Notebooks live at varying depths and get moved around; resolving the root
+    by looking for the data file means none of them carry a relative path that
+    breaks the next time the tree is reorganised.
+    """
+    start = Path(start or Path.cwd()).resolve()
+    for candidate in [start, *start.parents]:
+        if (candidate / "data" / "market_week_data.csv").exists():
+            return candidate
+    raise FileNotFoundError(
+        f"No data/market_week_data.csv found in {start} or any parent."
+    )
+
+
+def load_panel(path=None) -> pd.DataFrame:
+    """Read the market-week panel with week_start as datetimes.
+
+    With no argument, locates the data file relative to the repo root, so the
+    call works from any notebook depth.
+    """
+    if path is None:
+        path = find_repo_root() / "data" / "market_week_data.csv"
     return pd.read_csv(path, parse_dates=["week_start"])
 
 

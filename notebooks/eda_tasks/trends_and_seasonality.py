@@ -1,11 +1,17 @@
 import pandas as pd
+from pathlib import Path
+
+# Resolve the repo root by walking up to the folder containing data/, so this
+# script runs from any working directory.
+ROOT = next(p for p in [Path.cwd(), *Path.cwd().parents]
+            if (p / "data" / "market_week_data.csv").exists())
 
 # 1. Configure display settings for full visibility
 pd.set_option("display.max_columns", None)
 pd.set_option("display.width", 1000)
 
-# 2. Load dataset directly from downloads
-df = pd.read_csv("market_week_data.csv", parse_dates=["week_start"])
+# 2. Load the panel from the repo
+df = pd.read_csv(ROOT / "data" / "market_week_data.csv", parse_dates=["week_start"])
 
 # 3. Dynamically identify the rollout launch date
 launch = df.loc[df["digital_feature_available"] == 1, "week_start"].min()
